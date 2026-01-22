@@ -2,32 +2,34 @@ import { useState } from "react";
 import { askQuestion } from "../services/api";
 
 function ChatSystem() {
-  const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("System response will appear here...");
+  const [q, setQ] = useState("");
+  const [ans, setAns] = useState("");
 
-  const handleAsk = async () => {
+  const send = async () => {
     try {
-      setAnswer("Thinking...");
-      const res = await askQuestion(question);
-      setAnswer(res.answer);
+      setAns("Thinking...");
+      const res = await askQuestion(q);
+      setAns(res.answer); // ✅ REAL AI answer
     } catch (err) {
-      console.log(err);
-      setAnswer("❌ Backend not connected / upload files first.");
+      console.error(err);
+      setAns("❌ Backend error / upload files first.");
     }
   };
 
   return (
     <div>
       <h3>Ask About Your System</h3>
+
       <input
         type="text"
         placeholder="Ask something about your project..."
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
       />
-      <button onClick={handleAsk}>Send</button>
 
-      <div className="output-box">{answer}</div>
+      <button onClick={send}>Send</button>
+
+      <div className="output-box">{ans}</div>
     </div>
   );
 }

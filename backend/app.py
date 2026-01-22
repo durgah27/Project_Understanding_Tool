@@ -10,10 +10,16 @@ from file_loader import extract_text_from_file
 
 from rag_engine import chunk_text, build_faiss_index, retrieve_chunks
 
-from llm_engine import generate_with_ollama
+from llm_engine import generate_with_groq
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
+    return response
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -68,7 +74,7 @@ def ask():
     if not question:
         return jsonify({"error": "Question is required"}), 400
 
-    retrieved = retrieve_chunks(question, chunks_store, faiss_index, top_k=5)
+    retrieved = retrieve_chunks(question, chunks_store, faiss_index, top_k=3)
     context = "\n\n".join(retrieved)
 
     prompt = f"""
@@ -85,7 +91,7 @@ PROJECT CONTEXT:
 Answer in simple and clear English.
 """
 
-    answer = generate_with_ollama(prompt, model="llama3")
+    answer = generate_with_groq(prompt, model="llama3-8b-8192")
     return jsonify({"answer": answer})
 
 
@@ -104,7 +110,7 @@ def generate_docs():
     if not task:
         return jsonify({"error": "Task is required"}), 400
 
-    retrieved = retrieve_chunks(task, chunks_store, faiss_index, top_k=6)
+    retrieved = retrieve_chunks(task, chunks_store, faiss_index, top_k=3)
     context = "\n\n".join(retrieved)
 
     prompt = f"""
@@ -120,9 +126,8 @@ PROJECT CONTEXT:
 Give the answer in structured format with headings and bullet points.
 """
 
-    result = generate_with_ollama(prompt, model="llama3")
+    result = generate_with_groq(prompt, model="llama3-8b-8192")
     return jsonify({"result": result})
 
-
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)

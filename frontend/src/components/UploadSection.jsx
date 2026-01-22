@@ -6,14 +6,14 @@ function UploadSection({ onFilesSelected, onAnalyze, files }) {
     onFilesSelected(selected);
   };
 
-  const handleUploadAnalyze = async () => {
+  const handleUpload = async () => {
     try {
-      const data = await uploadFiles(files);
-      alert(`✅ Uploaded! Chunks: ${data.total_chunks}`);
-      onAnalyze(); // show dashboard
+      const res = await uploadFiles(files);
+      alert(`✅ Uploaded & Indexed! Total chunks: ${res.total_chunks}`);
+      onAnalyze();
     } catch (err) {
-      console.log(err);
-      alert("❌ Upload failed. Check backend running on port 5000.");
+      console.error(err);
+      alert("❌ Upload failed. Check backend running on 5000.");
     }
   };
 
@@ -27,11 +27,7 @@ function UploadSection({ onFilesSelected, onAnalyze, files }) {
         <p style={{ marginTop: "10px" }}>{files.length} files selected</p>
       )}
 
-      <button
-        onClick={handleUploadAnalyze}
-        disabled={files.length === 0}
-        style={{ opacity: files.length === 0 ? 0.5 : 1 }}
-      >
+      <button onClick={handleUpload} disabled={files.length === 0}>
         Upload & Analyze
       </button>
     </>

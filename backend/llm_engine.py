@@ -1,7 +1,7 @@
 import os
 from groq import Groq
 
-client = Groq(api_key=os.getenv("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"))
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 def generate_with_groq(prompt, model="llama3-8b-8192"):
     response = client.chat.completions.create(

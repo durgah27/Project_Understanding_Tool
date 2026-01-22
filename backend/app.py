@@ -3,17 +3,19 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
 
+from dotenv import load_dotenv
+load_dotenv()  # ✅ load API key before llm_engine
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from file_loader import extract_text_from_file
-
 from rag_engine import chunk_text, build_faiss_index, retrieve_chunks
-
-from llm_engine import generate_with_groq
+from llm_engine import generate_with_groq  # ✅ no model passed
 
 app = Flask(__name__)
 CORS(app, origins=["http://localhost:3000"], supports_credentials=True)
+
 @app.after_request
 def add_cors_headers(response):
     response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
@@ -21,21 +23,17 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
     return response
 
-# Set up logging
+# logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Memory stores (for demo). Later we can store permanently in DB.
 chunks_store = []
 faiss_index = None
-
 
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"message": "✅ Backend Running: ExplainMySystem API"})
 
-
-# ✅ Upload files and build RAG index
 @app.route("/upload", methods=["POST"])
 def upload_files():
     global chunks_store, faiss_index
@@ -49,7 +47,6 @@ def upload_files():
         all_text += f"\n\n--- FILE: {f.filename} ---\n"
         all_text += extract_text_from_file(f)
 
-    # Build chunks + FAISS index
     chunks_store = chunk_text(all_text, chunk_size=800, overlap=150)
     faiss_index = build_faiss_index(chunks_store)
 
@@ -58,8 +55,6 @@ def upload_files():
         "total_chunks": len(chunks_store)
     })
 
-
-# ✅ Ask question from project (RAG + LLM)
 @app.route("/ask", methods=["POST"])
 def ask():
     logger.info(f"Request received: {request.method} {request.path}")
@@ -91,11 +86,9 @@ PROJECT CONTEXT:
 Answer in simple and clear English.
 """
 
-    answer = generate_with_groq(prompt, model="llama3-8b-8192")
+    answer = generate_with_groq(prompt)  # ✅ no model name
     return jsonify({"answer": answer})
 
-
-# ✅ One-click report generator (Summary/Modules/Workflow/Viva etc.)
 @app.route("/generate", methods=["POST"])
 def generate_docs():
     logger.info(f"Request received: {request.method} {request.path}")
@@ -126,8 +119,8 @@ PROJECT CONTEXT:
 Give the answer in structured format with headings and bullet points.
 """
 
-    result = generate_with_groq(prompt, model="llama3-8b-8192")
+    result = generate_with_groq(prompt)  # ✅ no model name
     return jsonify({"result": result})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=True)
